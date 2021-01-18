@@ -5,41 +5,25 @@ export default function Edit(props) {
   const [groupedEntities, setGroupedEntities] = useState([]);
 
   useEffect(() => {
-    getAndMergeEntities();
-  }, [props.entities]);
-
-  const getAndMergeEntities = () => {
     axiosFB.get('homeEntities.json')
       .then(response => {
-        Object.values(response.data)[0].map(result => {
-          props.entities.filter((entity, index) => {
-            if (entity.entity_id === result.entity_id) {
-              return props.entities[index].react_on_homepage = true;
-            }
+        if (response.data && props.entities) {
+          response.data.map(result => {
+            props.entities.filter((entity, index) => {
+              if (entity.entity_id === result.entity_id) {
+                return props.entities[index].react_on_homepage = true;
+              }
+              return null;
+            });
+            return null;
           });
-        })
+        }
         setGroupedEntities(createGroupsPerType(props.entities));
       })
       .catch(error => {
         console.log(error)
       });
-  }
-
-
-
-  // const setCheckedEntities = async(checkedEntities, allEntities) => {
-  //   let convertCheckedEntities = await checkedEntities;
-  //   let convertAllEntities = await allEntities;
-  //   let homepageEntities = [];
-
-  //   if (convertCheckedEntities && convertAllEntities) {
-  //     Object.values(convertCheckedEntities).map(result => {
-  //       console.log(result);
-  //       return null;
-  //     });
-
-  //   }
-  // }
+  }, [props.entities]);
 
   const createGroupsPerType = (entities) => {
     let scripts = [];
@@ -94,7 +78,7 @@ export default function Edit(props) {
       })
     });
 
-    axiosFB.post('homeEntities.json', postObject)
+    axiosFB.put('homeEntities.json', postObject)
       .then(response => {
         console.log(response);
       })

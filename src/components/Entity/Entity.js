@@ -8,8 +8,23 @@ import OnOffSwitch from '../OnOffSwitch/OnOffSwitch';
 
 
 export default function Entity(props) {
-  const scriptTurnOn = (entity_id) => {
+
+  const scriptTurnOnHandler = (entity_id) => {
     axiosHass.post('/api/services/script/turn_on', {entity_id: entity_id})
+      .then(response => {
+        console.log(response)
+      })
+      .catch(error => {
+        console.log(error)
+      });
+  }
+
+  const lightToggleHandler = (entity_id) => {
+    const postBody = {
+      entity_id: entity_id
+    }
+
+    axiosHass.post('/api/servics/light/toggle', postBody)
       .then(response => {
         console.log(response)
       })
@@ -22,9 +37,9 @@ export default function Entity(props) {
     <div className={classes.Entity}>
       <span className={classes.title}>{ props.entity.attributes.friendly_name }</span>
       { props.entity.type !== 'script' ?
-        <OnOffSwitch />
+        <OnOffSwitch switchHandler={() => lightToggleHandler(props.entity.entity_id)} />
       :
-        <button onClick={() => scriptTurnOn(props.entity.entity_id)} className="btn btn-primary">Activeer</button>
+        <button onClick={() => scriptTurnOnHandler(props.entity.entity_id)} className="btn btn-primary">Activeer</button>
       }
     </div>
   )
