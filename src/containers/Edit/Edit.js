@@ -1,52 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axiosFB from '../../axios-firebase';
+import _ from 'lodash';
+
 
 export default function Edit(props) {
   const [groupedEntities, setGroupedEntities] = useState([]);
 
   useEffect(() => {
-    axiosFB.get('homeEntities.json')
-      .then(response => {
-        if (response.data && props.entities) {
-          response.data.map(result => {
-            props.entities.filter((entity, index) => {
-              if (entity.entity_id === result.entity_id) {
-                return props.entities[index].react_on_homepage = true;
-              }
-              return null;
-            });
-            return null;
-          });
-        }
-        setGroupedEntities(createGroupsPerType(props.entities));
-      })
-      .catch(error => {
-        console.log(error)
-      });
-  }, [props.entities]);
+    let returnArr = [];
 
-  const createGroupsPerType = (entities) => {
-    let scripts = [];
-    let lights = [];
-
-    if (entities && entities.length) {
-      entities.map(entity => {
-        if (entity.type === 'script') {
-          // console.log(entity);
-          scripts.push(entity)
-        }
-        if (entity.type === 'light') {
-          lights.push(entity)
+    if (props.entities) {
+      props.entities.data.map(entity => {
+        switch(entity.type) {
+          case 'light':
+          case 'script':
+            returnArr.push(entity);
+            break;
+          default:
         }
         return null;
       });
-    }
 
-    return {
-      scripts: scripts,
-      lights: lights
+      setGroupedEntities(_.groupBy(returnArr, 'type'));
     }
-  }
+  }, [props.entities]);
+
 
   const handleCheckbox = (event) => {
     const target = event.target;

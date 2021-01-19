@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axiosFB from '../../axios-firebase';
 import _ from 'lodash';
 
 import Entity from '../../components/Entity/Entity';
@@ -8,33 +7,33 @@ export default function Home(props) {
   const [homepageEntities, setHomepageEntities] = useState(null);
 
   useEffect(() => {
-    axiosFB.get('/homeEntities.json')
-      .then(response => {
-        let entities = [];
-        if (response.data) {
-          response.data.map(entity => {
-            entities.push(entity);
-            return null;
-          })
-          setHomepageEntities(_.groupBy(entities, 'type'));
+    let returnArr = [];
+
+    if (props.entities) {
+      props.entities.data.map(entity => {
+        if (entity.react_on_homepage) {
+          returnArr.push(entity);
         }
-      })
-      .catch(error => {
-        console.log(error)
+        return null;
       });
-  }, []);
+
+      setHomepageEntities(_.groupBy(returnArr, 'type'));
+    }
+  }, [props.entities]);
 
   return (
     <div>
       { homepageEntities ?
-          Object.values(homepageEntities).map((group, index) => {
-            return <div key={'index'+index}>
-                      {
-                        group.map(entity => {
-                          return <Entity key={entity.entity_id} entity={entity} />
-                        })
-                      }
-                    </div>
+
+          Object.entries(homepageEntities).map((group, index) => {
+              return <React.Fragment key={'index'+index}>
+                  <h2>{ group[0] }</h2>
+                  {
+                      group[1].map(entity => {
+                        return <Entity key={entity.entity_id} entity={entity} />
+                      })
+                  }
+              </React.Fragment>
           })
         :
           <div>Ga naar Edit om entiteiten toe te voegen</div>

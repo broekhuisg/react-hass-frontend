@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { BrowserRouter, Route, Link } from 'react-router-dom';
-
+import axios from 'axios';
+import axiosFB from '../../axios-firebase';
 import axiosHass from '../../axios-hass';
 import Container from 'react-bootstrap/Container';
 import Edit from '../Edit/Edit';
@@ -11,42 +12,42 @@ export class App extends Component {
     super(props);
     this.state = {
       all: null,
-      homepage: {
-        routines: []
-      },
-      rooms: {
-        livingroom: [],
-        kitchen: []
-      },
     }
   }
 
   componentDidMount() {
-    axiosHass.get('/api/states')
-      .then(response => {
-        this.setCustomEntityAttributes(response.data);
-        this.setState({
-          all: response.data
-        });
+    axios.all([
+      axiosHass.get('/api/states'),
+      axiosFB.get('/homeEntities.json')
+    ])
+    .then(axios.spread((...responses) => {
+      const hassData = responses[0];
+      const firebaseData = responses[1];
+
+      hassData.data.map((hassEntity, index) => {
+        hassEntity.type = this.getEntityType(hassEntity);
+        hassEntity.react_on_homepage = false;
+        firebaseData.data.filter((firebaseEntity) => {
+          if (hassEntity.entity_id === firebaseEntity.entity_id) {
+            hassData.data[index].react_on_homepage = true;
+          }
+          return null;
+        })
+        return null;
       })
-      .catch(error => {
-        console.log(error);
-      });
+
+      console.log(hassData.data);
+
+      this.setState({
+        all: hassData
+      })
+    }));
   }
 
   getEntityType = (entity) => {
     if (entity.entity_id) {
       return entity.entity_id.split(".")[0];
     }
-    return null;
-  }
-
-  setCustomEntityAttributes = (entities) => {
-    entities.map(entity => {
-      entity.react_on_homepage = false;
-      entity.type = this.getEntityType(entity);
-      return null;
-    });
     return null;
   }
 
@@ -57,7 +58,10 @@ export class App extends Component {
           <Link to="/">Home</Link>
           &nbsp; - &nbsp;
           <Link to="/edit">Edit</Link>
-          <Route path="/" exact render={() => <Home />} />
+          <Route
+            path="/"
+            exact
+            render={() => <Home entities={this.state.all} />} />
           <Route
             path="/edit"
             exact
